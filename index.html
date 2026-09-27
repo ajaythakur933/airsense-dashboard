@@ -1,10 +1,110 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>AirSense Pro Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AirSense Pro - Live Dashboard</title>
+    <!-- Import Chart.js for the graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #f4f7f6; padding: 20px; color: #333; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); max-width: 800px; margin: auto; }
+        canvas { width: 100% !important; max-height: 400px; margin-top: 20px;}
+        .latest-data { display: flex; justify-content: space-around; margin-bottom: 20px; font-size: 1.2em; font-weight: bold; background: #eef2f3; padding: 15px; border-radius: 8px;}
+        .status-ok { color: green; }
+        .status-error { color: red; }
+    </style>
 </head>
 <body>
-    <h1>AirSense Pro - Live Data</h1>
-    <p>Waiting for database connection...</p>
+
+    <div class="card">
+        <h1>AirSense Pro Dashboard 🌍</h1>
+        <div class="latest-data">
+            <div>🌡️ Temp: <span id="tempVal">--</span> °C</div>
+            <div>💧 Hum: <span id="humVal">--</span> %</div>
+            <div>🟢 Status: <span id="statusVal">--</span></div>
+        </div>
+        <canvas id="envChart"></canvas>
+    </div>
+
+    <!-- Firebase SDK (Compat version for simple HTML integration) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <script>
+        // 1. Initialize Firebase with your Database URL
+        const firebaseConfig = {
+            databaseURL: "https://airsense-pro-db-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // 2. Setup Chart.js
+        const ctx = document.getElementById('envChart').getContext('2d');
+        const envChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [], // Time labels will go here
+                datasets: [
+                    { label: 'Temperature (°C)', borderColor: '#ff6384', backgroundColor: 'rgba(255, 99, 132, 0.2)', data: [], fill: true, tension: 0.4 },
+                    { label: 'Humidity (%)', borderColor: '#36a2eb', backgroundColor: 'rgba(54, 162, 235, 0.2)', data: [], fill: true, tension: 0.4 }
+                ]
+            },
+            options: { 
+                responsive: true, 
+                animation: { duration: 0 }, // Disable animation so live updates don't stutter
+                scales: { x: { display: true }, y: { display: true } }
+            }
+        });
+
+        // 3. Listen for Live Data from Firebase (Get the last 30 readings)
+        const telemetryRef = db.ref('telemetry').limitToLast(30);
+        
+        telemetryRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+
+            // Clear old chart data
+            envChart.data.labels = [];
+            envChart.data.datasets[0].data = [];
+            envChart.data.datasets[1].data = [];
+
+            let latestTemp = "--", latestHum = "--", latestStatus = "--";
+
+            // Loop through all data points
+            for (let key in data) {
+                const reading = data[key];
+                
+                // Format the timestamp provided by Firebase
+                const date = new Date(reading.timestamp);
+                const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+                // Add to chart arrays
+                envChart.data.labels.push(timeString);
+                envChart.data.datasets[0].data.push(reading.temperature);
+                envChart.data.datasets[1].data.push(reading.humidity);
+
+                // Keep track of the very last reading for the UI at the top
+                latestTemp = reading.temperature;
+                latestHum = reading.humidity;
+                latestStatus = reading.sensor_status;
+            }
+
+            // Update Top UI
+            document.getElementById('tempVal').innerText = parseFloat(latestTemp).toFixed(1);
+            document.getElementById('humVal').innerText = parseFloat(latestHum).toFixed(1);
+            
+            const statusEl = document.getElementById('statusVal');
+            statusEl.innerText = latestStatus;
+            if(latestStatus === "ERROR") {
+                statusEl.className = "status-error";
+            } else {
+                statusEl.className = "status-ok";
+            }
+            
+            // Tell the chart to redraw with the new data
+            envChart.update();
+        });
+    </script>
 </body>
 </html>
