@@ -1,110 +1,1328 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AirSense Pro - Live Dashboard</title>
-    <!-- Import Chart.js for the graphs -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #f4f7f6; padding: 20px; color: #333; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); max-width: 800px; margin: auto; }
-        canvas { width: 100% !important; max-height: 400px; margin-top: 20px;}
-        .latest-data { display: flex; justify-content: space-around; margin-bottom: 20px; font-size: 1.2em; font-weight: bold; background: #eef2f3; padding: 15px; border-radius: 8px;}
-        .status-ok { color: green; }
-        .status-error { color: red; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AirSense Pro • Live Environmental Telemetry</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%3E<text y=%2226%22 font-size=%2224%22>🍃</text></svg>">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #070B14;
+      --navy-deep: #0D1527;
+      --navy-card: rgba(16, 26, 48, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-border-hover: rgba(0, 229, 255, 0.25);
+      --glass-shine: rgba(255, 255, 255, 0.03);
+      
+      --teal: #00E5FF;
+      --teal-glow: rgba(0, 229, 255, 0.35);
+      --green: #00E676;
+      --green-glow: rgba(0, 230, 118, 0.35);
+      --amber: #FFB300;
+      --amber-glow: rgba(255, 179, 0, 0.35);
+      --red: #FF5252;
+      --red-glow: rgba(255, 82, 82, 0.35);
+      --purple: #B388FF;
+      --blue: #2979FF;
+      
+      --text-main: #FFFFFF;
+      --text-muted: #8E9BAE;
+      --text-subtle: #4E5D78;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(0, 229, 255, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 25%, rgba(41, 121, 255, 0.07) 0%, transparent 45%),
+        radial-gradient(circle at 50% 80%, rgba(0, 230, 118, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, #0D1527 0%, #070B14 100%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Ambient top glow bar */
+    .top-glow {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--teal), var(--green), transparent);
+      z-index: 100;
+      box-shadow: 0 0 15px var(--teal-glow);
+    }
+
+    /* Container */
+    .container {
+      width: 100%;
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+      flex: 1;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--glass-border);
+      margin-bottom: 28px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(0, 229, 255, 0.2), rgba(0, 230, 118, 0.1));
+      border: 1px solid var(--glass-border-hover);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 0 20px rgba(0, 229, 255, 0.15);
+    }
+
+    .brand-title h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(120deg, #FFFFFF 40%, var(--teal) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-title p {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--teal);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Status Pill */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      background: rgba(16, 26, 48, 0.8);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(10px);
+    }
+
+    .status-pill.online {
+      color: var(--green);
+      border-color: rgba(0, 230, 118, 0.3);
+      box-shadow: 0 0 15px rgba(0, 230, 118, 0.15);
+    }
+
+    .status-pill.offline {
+      color: var(--red);
+      border-color: rgba(255, 82, 82, 0.3);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: currentColor;
+      position: relative;
+    }
+
+    .status-pill.online .dot::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background-color: currentColor;
+      animation: pulse 2s infinite ease-out;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.8; }
+      100% { transform: scale(2.6); opacity: 0; }
+    }
+
+    /* Glass Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--glass-border-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn.active {
+      background: rgba(0, 229, 255, 0.15);
+      border-color: var(--teal);
+      color: var(--teal);
+      box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+    }
+
+    .btn-icon {
+      font-size: 14px;
+      transition: transform 0.4s ease;
+    }
+
+    .btn:hover .btn-icon.spin {
+      transform: rotate(180deg);
+    }
+
+    /* Grid Layouts */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Glass Card Style */
+    .glass-card {
+      background: var(--navy-card);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 24px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+    }
+
+    .glass-card:hover {
+      border-color: var(--glass-border-hover);
+      box-shadow: 0 10px 36px rgba(0, 0, 0, 0.45), 0 0 20px rgba(0, 229, 255, 0.05);
+    }
+
+    /* Air Quality Hero Card */
+    .aq-hero-content {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      height: 100%;
+    }
+
+    @media (max-width: 580px) {
+      .aq-hero-content {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+
+    /* Circular Gauge */
+    .gauge-wrapper {
+      position: relative;
+      width: 170px;
+      height: 170px;
+      flex-shrink: 0;
+    }
+
+    .gauge-svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .gauge-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.06);
+      stroke-width: 12;
+    }
+
+    .gauge-bar {
+      fill: none;
+      stroke: var(--teal);
+      stroke-width: 12;
+      stroke-linecap: round;
+      stroke-dasharray: 440;
+      stroke-dashoffset: 440;
+      transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s ease;
+      filter: drop-shadow(0 0 8px var(--teal-glow));
+    }
+
+    .gauge-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .gauge-score {
+      font-family: 'Outfit', sans-serif;
+      font-size: 42px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+
+    .gauge-max {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .aq-details {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .aq-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      align-self: flex-start;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      background: rgba(0, 230, 118, 0.1);
+      color: var(--green);
+      border: 1px solid rgba(0, 230, 118, 0.3);
+    }
+
+    .aq-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .aq-desc {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .aq-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-subtle);
+      margin-top: auto;
+    }
+
+    /* Environmental Telemetry Grid */
+    .section-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--teal);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--glass-border);
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 1100px) {
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 580px) {
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .metric-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 20px;
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .metric-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .metric-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .metric-value-wrap {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .metric-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+
+    .metric-unit {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .metric-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-subtle);
+    }
+
+    /* Tag themes */
+    .tag-green { background: rgba(0, 230, 118, 0.12); color: var(--green); border: 1px solid rgba(0, 230, 118, 0.25); }
+    .tag-amber { background: rgba(255, 179, 0, 0.12); color: var(--amber); border: 1px solid rgba(255, 179, 0, 0.25); }
+    .tag-red   { background: rgba(255, 82, 82, 0.12); color: var(--red);   border: 1px solid rgba(255, 82, 82, 0.25); }
+    .tag-blue  { background: rgba(41, 121, 255, 0.12); color: var(--blue);  border: 1px solid rgba(41, 121, 255, 0.25); }
+    .tag-teal  { background: rgba(0, 229, 255, 0.12); color: var(--teal);  border: 1px solid rgba(0, 229, 255, 0.25); }
+
+    /* Chart Section */
+    .chart-section {
+      margin-bottom: 24px;
+    }
+
+    .chart-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .chart-btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 340px;
+      width: 100%;
+    }
+
+    /* System Diagnostics Grid */
+    .diagnostics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 992px) {
+      .diagnostics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 580px) {
+      .diagnostics-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .diag-item {
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+    }
+
+    .diag-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .diag-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .diag-sub {
+      font-size: 11px;
+      color: var(--text-subtle);
+      margin-top: 4px;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--glass-border);
+      padding: 24px 0 12px;
+      margin-top: 40px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      gap: 12px;
+    }
+
+    footer a {
+      color: var(--teal);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Loading Shimmer Animation */
+    .shimmer {
+      background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+      background-size: 200% 100%;
+      animation: shimmerAnim 2s infinite;
+      border-radius: 4px;
+    }
+
+    @keyframes shimmerAnim {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+  </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1>AirSense Pro Dashboard 🌍</h1>
-        <div class="latest-data">
-            <div>🌡️ Temp: <span id="tempVal">--</span> °C</div>
-            <div>💧 Hum: <span id="humVal">--</span> %</div>
-            <div>🟢 Status: <span id="statusVal">--</span></div>
+  <!-- Ambient Top Edge Accent -->
+  <div class="top-glow"></div>
+
+  <div class="container">
+    
+    <!-- Top Navigation & Brand Header -->
+    <header>
+      <div class="brand-group">
+        <div class="brand-icon">🍃</div>
+        <div class="brand-title">
+          <h1>AirSense Pro</h1>
+          <p>Live Environmental Telemetry</p>
         </div>
-        <canvas id="envChart"></canvas>
+      </div>
+
+      <div class="header-actions">
+        <!-- Live Connection Status Pill -->
+        <div id="connectionPill" class="status-pill online">
+          <div class="dot"></div>
+          <span id="connectionText">CONNECTING</span>
+        </div>
+
+        <!-- Temperature Unit Toggle -->
+        <button id="unitToggleBtn" class="btn" onclick="toggleTempUnit()">
+          <span>°C</span>
+        </button>
+
+        <!-- Refresh Button -->
+        <button id="refreshBtn" class="btn" onclick="fetchLiveTelemetry(true)">
+          <span class="btn-icon spin">↺</span>
+          <span>SYNC</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Hero Section: Air Quality & Live Health Overview -->
+    <div class="hero-grid">
+      <!-- Air Quality Gauge Card -->
+      <div class="glass-card">
+        <div class="aq-hero-content">
+          <div class="gauge-wrapper">
+            <svg class="gauge-svg" viewBox="0 0 160 160">
+              <circle class="gauge-bg" cx="80" cy="80" r="70" />
+              <circle id="gaugeBar" class="gauge-bar" cx="80" cy="80" r="70" />
+            </svg>
+            <div class="gauge-center">
+              <div id="aqScoreVal" class="gauge-score">--</div>
+              <div class="gauge-max">SCORE / 100</div>
+            </div>
+          </div>
+
+          <div class="aq-details">
+            <div id="aqBadge" class="aq-badge">CALIBRATING</div>
+            <div id="aqTitle" class="aq-title">Air Quality Index</div>
+            <div id="aqDesc" class="aq-desc">Receiving live telemetry stream from sensor node...</div>
+            <div id="lastSyncTime" class="aq-time">Last update: --</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Health Recommendation & Status Overview -->
+      <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div class="section-title">SENSOR HEALTH & CALIBRATION</div>
+          <h3 id="healthHeadline" style="font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 8px;">
+            Analyzing Atmosphere
+          </h3>
+          <p id="healthAdvice" style="color: var(--text-muted); font-size: 14px; line-height: 1.6;">
+            The Bosch BME680 sensor is monitoring ambient temperature, relative humidity, barometric pressure, and VOC gas resistance.
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap;">
+          <div class="diag-item" style="flex: 1; min-width: 140px;">
+            <div class="diag-label">SENSOR STATUS</div>
+            <div id="sensorHwStatus" class="diag-value" style="color: var(--green);">ONLINE (OK)</div>
+          </div>
+          <div class="diag-item" style="flex: 1; min-width: 140px;">
+            <div class="diag-label">CALIBRATION LEVEL</div>
+            <div id="calibLevel" class="diag-value" style="color: var(--teal);">OPTIMAL</div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Firebase SDK (Compat version for simple HTML integration) -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <!-- Live Metrics Grid -->
+    <div class="section-title">ENVIRONMENT // TELEMETRY METRICS</div>
+    <div class="metrics-grid">
+      
+      <!-- Temperature Card -->
+      <div class="glass-card metric-card">
+        <div class="metric-header">
+          <div class="metric-label"><span>🌡️</span> TEMPERATURE</div>
+          <div id="tempTag" class="metric-tag tag-green">NORMAL</div>
+        </div>
+        <div class="metric-value-wrap">
+          <div id="tempVal" class="metric-value">--</div>
+          <div id="tempUnit" class="metric-unit">°C</div>
+        </div>
+        <div class="metric-footer">
+          <span>Target: 20 - 26 °C</span>
+          <span id="tempMinMax">--</span>
+        </div>
+      </div>
 
-    <script>
-        // 1. Initialize Firebase with your Database URL
-        const firebaseConfig = {
-            databaseURL: "https://airsense-pro-db-default-rtdb.asia-southeast1.firebasedatabase.app/"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+      <!-- Humidity Card -->
+      <div class="glass-card metric-card">
+        <div class="metric-header">
+          <div class="metric-label"><span>💧</span> HUMIDITY</div>
+          <div id="humTag" class="metric-tag tag-green">COMFORT</div>
+        </div>
+        <div class="metric-value-wrap">
+          <div id="humVal" class="metric-value">--</div>
+          <div class="metric-unit">%</div>
+        </div>
+        <div class="metric-footer">
+          <span>Target: 30 - 60 %</span>
+          <span id="humDew">Dew: --</span>
+        </div>
+      </div>
 
-        // 2. Setup Chart.js
-        const ctx = document.getElementById('envChart').getContext('2d');
-        const envChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: [], // Time labels will go here
-                datasets: [
-                    { label: 'Temperature (°C)', borderColor: '#ff6384', backgroundColor: 'rgba(255, 99, 132, 0.2)', data: [], fill: true, tension: 0.4 },
-                    { label: 'Humidity (%)', borderColor: '#36a2eb', backgroundColor: 'rgba(54, 162, 235, 0.2)', data: [], fill: true, tension: 0.4 }
-                ]
-            },
-            options: { 
-                responsive: true, 
-                animation: { duration: 0 }, // Disable animation so live updates don't stutter
-                scales: { x: { display: true }, y: { display: true } }
-            }
-        });
+      <!-- Barometric Pressure Card -->
+      <div class="glass-card metric-card">
+        <div class="metric-header">
+          <div class="metric-label"><span>☁️</span> PRESSURE</div>
+          <div id="presTag" class="metric-tag tag-blue">STABLE</div>
+        </div>
+        <div class="metric-value-wrap">
+          <div id="presVal" class="metric-value">--</div>
+          <div class="metric-unit">hPa</div>
+        </div>
+        <div class="metric-footer">
+          <span>Sea Level ~1013 hPa</span>
+          <span id="presTrend">Normal</span>
+        </div>
+      </div>
 
-        // 3. Listen for Live Data from Firebase (Get the last 30 readings)
-        const telemetryRef = db.ref('telemetry').limitToLast(30);
+      <!-- Gas Resistance Card -->
+      <div class="glass-card metric-card">
+        <div class="metric-header">
+          <div class="metric-label"><span>💨</span> GAS RESISTANCE</div>
+          <div id="gasTag" class="metric-tag tag-teal">CLEAN</div>
+        </div>
+        <div class="metric-value-wrap">
+          <div id="gasVal" class="metric-value">--</div>
+          <div class="metric-unit">kΩ</div>
+        </div>
+        <div class="metric-footer">
+          <span>VOC & Smells Index</span>
+          <span id="gasRaw">--</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Historical Telemetry Interactive Chart -->
+    <div class="glass-card chart-section">
+      <div class="chart-controls">
+        <div>
+          <div class="section-title" style="margin-bottom: 4px;">HISTORICAL SENSOR ANALYTICS</div>
+          <div id="chartSubtitle" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted);">
+            Telemetry trend over selected time window
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <!-- Metric Selectors -->
+          <div class="chart-btn-group">
+            <button class="btn active" id="btnMetricTemp" onclick="switchMetric('temp')">Temp & Hum</button>
+            <button class="btn" id="btnMetricAQI" onclick="switchMetric('aqi')">AQ Score</button>
+            <button class="btn" id="btnMetricGas" onclick="switchMetric('gas')">Gas (kΩ)</button>
+            <button class="btn" id="btnMetricPress" onclick="switchMetric('press')">Pressure</button>
+          </div>
+
+          <!-- Time Window Selectors -->
+          <div class="chart-btn-group">
+            <button class="btn active" id="win1h" onclick="changeWindow('1h')">1H</button>
+            <button class="btn" id="win6h" onclick="changeWindow('6h')">6H</button>
+            <button class="btn" id="win12h" onclick="changeWindow('12h')">12H</button>
+            <button class="btn" id="win24h" onclick="changeWindow('24h')">24H</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="telemetryChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Node System & Diagnostics Section -->
+    <div class="section-title">NODE SYSTEM // HARDWARE DIAGNOSTICS</div>
+    <div class="glass-card">
+      <div class="diagnostics-grid">
+        <div class="diag-item">
+          <div class="diag-label">WI-FI NETWORK</div>
+          <div id="sysSsid" class="diag-value">--</div>
+          <div id="sysRssi" class="diag-sub">Signal: -- dBm</div>
+        </div>
+
+        <div class="diag-item">
+          <div class="diag-label">LOCAL IP ADDRESS</div>
+          <div id="sysIp" class="diag-value">--</div>
+          <div class="diag-sub">mDNS: airsense.local</div>
+        </div>
+
+        <div class="diag-item">
+          <div class="diag-label">SYSTEM UPTIME</div>
+          <div id="sysUptime" class="diag-value">--</div>
+          <div id="sysReads" class="diag-sub">Reads: --</div>
+        </div>
+
+        <div class="diag-item">
+          <div class="diag-label">FIRMWARE VERSION</div>
+          <div id="sysFirmware" class="diag-value">v1.9.0</div>
+          <div id="sysHeap" class="diag-sub">Free Heap: -- KB</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <div>
+        <span>AirSense Pro IoT Monitoring</span> • 
+        <span>ESP32 + BME680 Architecture</span>
+      </div>
+      <div>
+        <a href="https://github.com" target="_blank" rel="noopener">GitHub Project Repository</a>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    // ============================================================
+    // CONFIGURATION & STATE
+    // ============================================================
+    const FIREBASE_BASE_URL = "https://airsense-pro-db-default-rtdb.asia-southeast1.firebasedatabase.app";
+    
+    let isFahrenheit = false;
+    let currentWindow = '1h';
+    let currentMetricMode = 'temp'; // 'temp', 'aqi', 'gas', 'press'
+    let telemetryChart = null;
+    let latestTempCelsius = null;
+    let pollInterval = null;
+
+    // Window sample limits matching mobile app
+    const WINDOW_CONFIG = {
+      '1h':  { limit: 720,   durationMs: 1 * 3600 * 1000 },
+      '6h':  { limit: 4320,  durationMs: 6 * 3600 * 1000 },
+      '12h': { limit: 8640,  durationMs: 12 * 3600 * 1000 },
+      '24h': { limit: 15000, durationMs: 24 * 3600 * 1000 }
+    };
+
+    // ============================================================
+    // INITIALIZATION
+    // ============================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      initChart();
+      fetchLiveTelemetry();
+      fetchSystemStatus();
+      loadHistoryData(currentWindow);
+
+      // Realtime polling: live every 4 seconds, system every 15 seconds, history every 60 seconds
+      pollInterval = setInterval(fetchLiveTelemetry, 4000);
+      setInterval(fetchSystemStatus, 15000);
+      setInterval(() => loadHistoryData(currentWindow), 60000);
+    });
+
+    // ============================================================
+    // FETCH LIVE TELEMETRY
+    // ============================================================
+    async function fetchLiveTelemetry(manual = false) {
+      const syncBtn = document.getElementById('refreshBtn');
+      if (manual && syncBtn) syncBtn.classList.add('active');
+
+      try {
+        const res = await fetch(`${FIREBASE_BASE_URL}/telemetry.json?orderBy="$key"&limitToLast=1`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         
-        telemetryRef.on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
+        const data = await res.json();
+        if (data && typeof data === 'object') {
+          const keys = Object.keys(data);
+          if (keys.length > 0) {
+            const entry = data[keys[0]];
+            updateDashboard(entry);
+            setOnlineStatus(true);
+          }
+        }
+      } catch (err) {
+        console.warn('Telemetry fetch error:', err);
+        setOnlineStatus(false);
+      } finally {
+        if (manual && syncBtn) {
+          setTimeout(() => syncBtn.classList.remove('active'), 500);
+        }
+      }
+    }
 
-            // Clear old chart data
-            envChart.data.labels = [];
-            envChart.data.datasets[0].data = [];
-            envChart.data.datasets[1].data = [];
+    // ============================================================
+    // FETCH SYSTEM STATUS
+    // ============================================================
+    async function fetchSystemStatus() {
+      try {
+        const res = await fetch(`${FIREBASE_BASE_URL}/system.json`);
+        if (!res.ok) return;
+        const sys = await res.json();
+        if (sys && typeof sys === 'object') {
+          updateSystemUI(sys);
+        }
+      } catch (e) {
+        console.warn('System status error:', e);
+      }
+    }
 
-            let latestTemp = "--", latestHum = "--", latestStatus = "--";
+    // ============================================================
+    // UPDATE DASHBOARD UI
+    // ============================================================
+    function updateDashboard(entry) {
+      // Temperature
+      latestTempCelsius = parseFloat(entry.temperature ?? entry.temp ?? 0);
+      renderTemperature();
 
-            // Loop through all data points
-            for (let key in data) {
-                const reading = data[key];
-                
-                // Format the timestamp provided by Firebase
-                const date = new Date(reading.timestamp);
-                const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      // Humidity
+      const hum = parseFloat(entry.humidity ?? entry.hum ?? 0);
+      document.getElementById('humVal').textContent = hum.toFixed(1);
+      updateHumidityTag(hum);
 
-                // Add to chart arrays
-                envChart.data.labels.push(timeString);
-                envChart.data.datasets[0].data.push(reading.temperature);
-                envChart.data.datasets[1].data.push(reading.humidity);
+      // Calculate approximate dew point
+      const dew = latestTempCelsius - ((100 - hum) / 5);
+      document.getElementById('humDew').textContent = `Dew: ${isFahrenheit ? (dew * 9/5 + 32).toFixed(1) + '°F' : dew.toFixed(1) + '°C'}`;
 
-                // Keep track of the very last reading for the UI at the top
-                latestTemp = reading.temperature;
-                latestHum = reading.humidity;
-                latestStatus = reading.sensor_status;
+      // Pressure
+      const pres = parseFloat(entry.pressure ?? entry.press ?? 0);
+      document.getElementById('presVal').textContent = pres.toFixed(1);
+      const presTag = document.getElementById('presTag');
+      if (pres < 1000) {
+        presTag.textContent = "LOW (RAIN)";
+        presTag.className = "metric-tag tag-amber";
+      } else if (pres > 1020) {
+        presTag.textContent = "HIGH (CLEAR)";
+        presTag.className = "metric-tag tag-teal";
+      } else {
+        presTag.textContent = "STABLE";
+        presTag.className = "metric-tag tag-blue";
+      }
+
+      // Gas Resistance
+      let rawGas = parseFloat(entry.gas_resistance ?? entry.gas ?? 0);
+      let gasKohm = rawGas > 1000 ? rawGas / 1000 : rawGas;
+      document.getElementById('gasVal').textContent = gasKohm.toFixed(2);
+      const gasTag = document.getElementById('gasTag');
+      if (gasKohm > 50) {
+        gasTag.textContent = "EXCELLENT";
+        gasTag.className = "metric-tag tag-green";
+      } else if (gasKohm > 25) {
+        gasTag.textContent = "GOOD";
+        gasTag.className = "metric-tag tag-teal";
+      } else if (gasKohm > 10) {
+        gasTag.textContent = "MODERATE";
+        gasTag.className = "metric-tag tag-amber";
+      } else {
+        gasTag.textContent = "VOC DETECTED";
+        gasTag.className = "metric-tag tag-red";
+      }
+
+      // Air Quality Score
+      const aqScore = parseFloat(entry.aq_score ?? entry.airQualityScore ?? 0);
+      updateAQScore(aqScore, entry.aq_level ?? entry.airStatus);
+
+      // Last sync timestamp
+      const ts = entry.timestamp ? new Date(entry.timestamp) : new Date();
+      document.getElementById('lastSyncTime').textContent = `Last update: ${ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+    }
+
+    // ============================================================
+    // TEMPERATURE RENDER & TOGGLE
+    // ============================================================
+    function renderTemperature() {
+      if (latestTempCelsius === null || isNaN(latestTempCelsius)) return;
+      const displayVal = isFahrenheit ? (latestTempCelsius * 9/5 + 32) : latestTempCelsius;
+      document.getElementById('tempVal').textContent = displayVal.toFixed(1);
+      document.getElementById('tempUnit').textContent = isFahrenheit ? '°F' : '°C';
+      
+      const tag = document.getElementById('tempTag');
+      if (latestTempCelsius < 18) {
+        tag.textContent = "COOL";
+        tag.className = "metric-tag tag-blue";
+      } else if (latestTempCelsius <= 28) {
+        tag.textContent = "IDEAL";
+        tag.className = "metric-tag tag-green";
+      } else if (latestTempCelsius <= 34) {
+        tag.textContent = "WARM";
+        tag.className = "metric-tag tag-amber";
+      } else {
+        tag.textContent = "HOT";
+        tag.className = "metric-tag tag-red";
+      }
+    }
+
+    function toggleTempUnit() {
+      isFahrenheit = !isFahrenheit;
+      document.getElementById('unitToggleBtn').textContent = isFahrenheit ? '°F' : '°C';
+      renderTemperature();
+      if (telemetryChart) loadHistoryData(currentWindow);
+    }
+
+    function updateHumidityTag(hum) {
+      const tag = document.getElementById('humTag');
+      if (hum < 30) {
+        tag.textContent = "DRY";
+        tag.className = "metric-tag tag-amber";
+      } else if (hum <= 60) {
+        tag.textContent = "COMFORT";
+        tag.className = "metric-tag tag-green";
+      } else if (hum <= 70) {
+        tag.textContent = "ELEVATED";
+        tag.className = "metric-tag tag-amber";
+      } else {
+        tag.textContent = "HUMID";
+        tag.className = "metric-tag tag-red";
+      }
+    }
+
+    // ============================================================
+    // AIR QUALITY GAUGE & HEALTH ADVICE
+    // ============================================================
+    function updateAQScore(score, rawLevel) {
+      const scoreInt = Math.round(score);
+      document.getElementById('aqScoreVal').textContent = isNaN(scoreInt) ? '--' : scoreInt;
+
+      // Animate circular arc (Circumference: 2 * pi * 70 = ~439.82)
+      const circumference = 440;
+      const offset = circumference - (Math.max(0, Math.min(100, score)) / 100) * circumference;
+      const bar = document.getElementById('gaugeBar');
+      bar.style.strokeDashoffset = offset;
+
+      const badge = document.getElementById('aqBadge');
+      const title = document.getElementById('aqTitle');
+      const desc = document.getElementById('aqDesc');
+      const advice = document.getElementById('healthAdvice');
+      const headline = document.getElementById('healthHeadline');
+
+      let color = 'var(--green)';
+      let glow = 'var(--green-glow)';
+
+      if (score >= 80) {
+        badge.textContent = "EXCELLENT";
+        badge.className = "aq-badge tag-green";
+        color = 'var(--green)';
+        glow = 'var(--green-glow)';
+        title.textContent = "Clean & Fresh Air";
+        desc.textContent = "Air quality is ideal. No significant pollutants or VOC contaminants detected.";
+        headline.textContent = "Ideal Living Conditions";
+        advice.textContent = "Great time to keep windows open for natural ventilation. Perfect conditions for indoor comfort and deep focus.";
+      } else if (score >= 60) {
+        badge.textContent = "GOOD";
+        badge.className = "aq-badge tag-teal";
+        color = 'var(--teal)';
+        glow = 'var(--teal-glow)';
+        title.textContent = "Good Air Quality";
+        desc.textContent = "Air quality is acceptable for healthy individuals. Minor trace gases present.";
+        headline.textContent = "Normal Atmospheric State";
+        advice.textContent = "Safe for all standard daily activities. Suitable for continuous indoor working or relaxation.";
+      } else if (score >= 40) {
+        badge.textContent = "MODERATE";
+        badge.className = "aq-badge tag-amber";
+        color = 'var(--amber)';
+        glow = 'var(--amber-glow)';
+        title.textContent = "Moderate Air Quality";
+        desc.textContent = "Air contains noticeable VOC elements or elevated humidity levels.";
+        headline.textContent = "Ventilation Recommended";
+        advice.textContent = "Sensitive groups may experience mild throat or eye irritation. Consider opening a window or running an air purifier.";
+      } else {
+        badge.textContent = "POOR / CAUTION";
+        badge.className = "aq-badge tag-red";
+        color = 'var(--red)';
+        glow = 'var(--red-glow)';
+        title.textContent = "Poor Air Quality";
+        desc.textContent = "High concentration of volatile organic compounds (VOCs) or stagnant air.";
+        headline.textContent = "Action Recommended";
+        advice.textContent = "Turn on air filtration, activate kitchen/bathroom exhaust fans, and introduce fresh outdoor airflow immediately.";
+      }
+
+      bar.style.stroke = color;
+      bar.style.filter = `drop-shadow(0 0 10px ${glow})`;
+    }
+
+    // ============================================================
+    // SYSTEM STATUS UI
+    // ============================================================
+    function updateSystemUI(sys) {
+      if (sys.ssid) document.getElementById('sysSsid').textContent = sys.ssid;
+      if (sys.rssi) {
+        const rssi = parseInt(sys.rssi);
+        const quality = rssi > -55 ? 'Excellent' : rssi > -70 ? 'Good' : 'Weak';
+        document.getElementById('sysRssi').textContent = `${rssi} dBm (${quality})`;
+      }
+      if (sys.ip) document.getElementById('sysIp').textContent = sys.ip;
+      if (sys.firmware) document.getElementById('sysFirmware').textContent = `v${sys.firmware}`;
+      if (sys.sensorReads) document.getElementById('sysReads').textContent = `Reads: ${Number(sys.sensorReads).toLocaleString()}`;
+      if (sys.freeHeap) document.getElementById('sysHeap').textContent = `Free Heap: ${(sys.freeHeap / 1024).toFixed(1)} KB`;
+      if (sys.uptime !== undefined) {
+        document.getElementById('sysUptime').textContent = formatUptime(parseInt(sys.uptime));
+      }
+    }
+
+    function formatUptime(secs) {
+      const d = Math.floor(secs / 86400);
+      const h = Math.floor((secs % 86400) / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      const s = secs % 60;
+      if (d > 0) return `${d}d ${h.toString().padStart(2, '0')}h ${m.toString().padStart(2, '0')}m`;
+      if (h > 0) return `${h}h ${m.toString().padStart(2, '0')}m`;
+      return `${m}m ${s.toString().padStart(2, '0')}s`;
+    }
+
+    function setOnlineStatus(online) {
+      const pill = document.getElementById('connectionPill');
+      const text = document.getElementById('connectionText');
+      if (online) {
+        pill.className = "status-pill online";
+        text.textContent = "LIVE";
+      } else {
+        pill.className = "status-pill offline";
+        text.textContent = "OFFLINE";
+      }
+    }
+
+    // ============================================================
+    // CHART.JS INITIALIZATION & DATA LOADING
+    // ============================================================
+    function initChart() {
+      const ctx = document.getElementById('telemetryChart').getContext('2d');
+      telemetryChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: [], datasets: [] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: {
+              labels: {
+                color: '#8E9BAE',
+                font: { family: 'JetBrains Mono', size: 11 },
+                usePointStyle: true,
+                pointStyle: 'circle'
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(13, 21, 39, 0.95)',
+              borderColor: 'rgba(0, 229, 255, 0.3)',
+              borderWidth: 1,
+              titleFont: { family: 'JetBrains Mono', size: 12 },
+              bodyFont: { family: 'JetBrains Mono', size: 12 },
+              padding: 12,
+              cornerRadius: 10
             }
-
-            // Update Top UI
-            document.getElementById('tempVal').innerText = parseFloat(latestTemp).toFixed(1);
-            document.getElementById('humVal').innerText = parseFloat(latestHum).toFixed(1);
-            
-            const statusEl = document.getElementById('statusVal');
-            statusEl.innerText = latestStatus;
-            if(latestStatus === "ERROR") {
-                statusEl.className = "status-error";
-            } else {
-                statusEl.className = "status-ok";
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.04)' },
+              ticks: { color: '#8E9BAE', font: { family: 'JetBrains Mono', size: 10 }, maxTicksLimit: 8 }
+            },
+            y: {
+              grid: { color: 'rgba(255, 255, 255, 0.04)' },
+              ticks: { color: '#8E9BAE', font: { family: 'JetBrains Mono', size: 10 } }
             }
-            
-            // Tell the chart to redraw with the new data
-            envChart.update();
+          }
+        }
+      });
+    }
+
+    async function loadHistoryData(windowKey) {
+      const cfg = WINDOW_CONFIG[windowKey] || WINDOW_CONFIG['1h'];
+      const url = `${FIREBASE_BASE_URL}/telemetry.json?orderBy="$key"&limitToLast=${cfg.limit}`;
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!data || typeof data !== 'object') return;
+
+        const entries = Object.values(data);
+        entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+        const now = Date.now();
+        const cutoff = now - cfg.durationMs;
+        const filtered = entries.filter(e => (e.timestamp || 0) >= cutoff);
+
+        renderChartData(filtered.length > 0 ? filtered : entries.slice(-100));
+      } catch (e) {
+        console.warn('History fetch error:', e);
+      }
+    }
+
+    function renderChartData(records) {
+      if (!telemetryChart || records.length === 0) return;
+
+      const labels = records.map(r => {
+        const d = new Date(r.timestamp || Date.now());
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      });
+
+      let datasets = [];
+
+      if (currentMetricMode === 'temp') {
+        const tempData = records.map(r => {
+          const c = parseFloat(r.temperature ?? r.temp ?? 0);
+          return isFahrenheit ? (c * 9/5 + 32) : c;
         });
-    </script>
+        const humData = records.map(r => parseFloat(r.humidity ?? r.hum ?? 0));
+
+        datasets = [
+          {
+            label: `Temperature (${isFahrenheit ? '°F' : '°C'})`,
+            data: tempData,
+            borderColor: '#FFB300',
+            backgroundColor: 'rgba(255, 179, 0, 0.08)',
+            fill: true,
+            tension: 0.35,
+            pointRadius: 0
+          },
+          {
+            label: 'Humidity (%)',
+            data: humData,
+            borderColor: '#00E5FF',
+            backgroundColor: 'rgba(0, 229, 255, 0.08)',
+            fill: true,
+            tension: 0.35,
+            pointRadius: 0
+          }
+        ];
+      } else if (currentMetricMode === 'aqi') {
+        const aqData = records.map(r => parseFloat(r.aq_score ?? r.airQualityScore ?? 0));
+        datasets = [
+          {
+            label: 'Air Quality Score (0-100)',
+            data: aqData,
+            borderColor: '#00E676',
+            backgroundColor: 'rgba(0, 230, 118, 0.1)',
+            fill: true,
+            tension: 0.35,
+            pointRadius: 0
+          }
+        ];
+      } else if (currentMetricMode === 'gas') {
+        const gasData = records.map(r => {
+          const g = parseFloat(r.gas_resistance ?? r.gas ?? 0);
+          return g > 1000 ? (g / 1000) : g;
+        });
+        datasets = [
+          {
+            label: 'Gas Resistance (kΩ)',
+            data: gasData,
+            borderColor: '#B388FF',
+            backgroundColor: 'rgba(179, 136, 255, 0.1)',
+            fill: true,
+            tension: 0.35,
+            pointRadius: 0
+          }
+        ];
+      } else if (currentMetricMode === 'press') {
+        const pressData = records.map(r => parseFloat(r.pressure ?? r.press ?? 0));
+        datasets = [
+          {
+            label: 'Barometric Pressure (hPa)',
+            data: pressData,
+            borderColor: '#2979FF',
+            backgroundColor: 'rgba(41, 121, 255, 0.1)',
+            fill: true,
+            tension: 0.35,
+            pointRadius: 0
+          }
+        ];
+      }
+
+      telemetryChart.data.labels = labels;
+      telemetryChart.data.datasets = datasets;
+      telemetryChart.update();
+    }
+
+    // ============================================================
+    // CONTROLS & EVENT HANDLERS
+    // ============================================================
+    function switchMetric(mode) {
+      currentMetricMode = mode;
+      ['btnMetricTemp', 'btnMetricAQI', 'btnMetricGas', 'btnMetricPress'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+      });
+
+      const activeBtnId = mode === 'temp' ? 'btnMetricTemp' : 
+                          mode === 'aqi' ? 'btnMetricAQI' : 
+                          mode === 'gas' ? 'btnMetricGas' : 'btnMetricPress';
+      const activeEl = document.getElementById(activeBtnId);
+      if (activeEl) activeEl.classList.add('active');
+
+      loadHistoryData(currentWindow);
+    }
+
+    function changeWindow(winKey) {
+      currentWindow = winKey;
+      ['win1h', 'win6h', 'win12h', 'win24h'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+      });
+      const activeBtn = document.getElementById(`win${winKey}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      loadHistoryData(currentWindow);
+    }
+  </script>
 </body>
 </html>
