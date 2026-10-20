@@ -6,7 +6,7 @@
   <title>AirSense Pro • Live Environmental Telemetry</title>
   
   <!-- Favicon -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%3E<text y=%2226%22 font-size=%2224%22>🍃</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%200%20100%20100%22><text y=%22.9em%22 font-size=%2290%22>🍃</text></svg>">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,10 +20,10 @@
     :root {
       --bg-dark: #070B14;
       --navy-deep: #0D1527;
-      --navy-card: rgba(16, 26, 48, 0.65);
+      --navy-card: rgba(16, 26, 48, 0.72);
       --glass-border: rgba(255, 255, 255, 0.08);
-      --glass-border-hover: rgba(0, 229, 255, 0.25);
-      --glass-shine: rgba(255, 255, 255, 0.03);
+      --glass-border-hover: rgba(0, 229, 255, 0.35);
+      --glass-shine: rgba(255, 255, 255, 0.04);
       
       --teal: #00E5FF;
       --teal-glow: rgba(0, 229, 255, 0.35);
@@ -39,6 +39,10 @@
       --text-main: #FFFFFF;
       --text-muted: #8E9BAE;
       --text-subtle: #4E5D78;
+
+      /* Dynamic Theme Variables (Updated via JS based on environment) */
+      --env-accent: #00E5FF;
+      --env-glow: rgba(0, 229, 255, 0.25);
     }
 
     * {
@@ -50,9 +54,9 @@
     body {
       background-color: var(--bg-dark);
       background-image: 
-        radial-gradient(circle at 15% 15%, rgba(0, 229, 255, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 85% 25%, rgba(41, 121, 255, 0.07) 0%, transparent 45%),
-        radial-gradient(circle at 50% 80%, rgba(0, 230, 118, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 15% 15%, var(--env-glow) 0%, transparent 45%),
+        radial-gradient(circle at 85% 25%, rgba(41, 121, 255, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 50% 80%, rgba(0, 230, 118, 0.04) 0%, transparent 50%),
         radial-gradient(circle at 50% 50%, #0D1527 0%, #070B14 100%);
       background-attachment: fixed;
       color: var(--text-main);
@@ -61,22 +65,38 @@
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
+      transition: background-image 1.5s ease;
     }
 
-    /* Ambient top glow bar */
+    /* Fixed Background Canvas for Atmospheric Particles */
+    #ambientCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.85;
+    }
+
+    /* Ambient top glow bar with dynamic pulse */
     .top-glow {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       height: 3px;
-      background: linear-gradient(90deg, transparent, var(--teal), var(--green), transparent);
+      background: linear-gradient(90deg, transparent, var(--env-accent), var(--teal), transparent);
       z-index: 100;
-      box-shadow: 0 0 15px var(--teal-glow);
+      box-shadow: 0 0 16px var(--env-glow);
+      transition: all 1.2s ease;
     }
 
     /* Container */
     .container {
+      position: relative;
+      z-index: 2;
       width: 100%;
       max-width: 1320px;
       margin: 0 auto;
@@ -99,20 +119,45 @@
     .brand-group {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 16px;
     }
 
-    .brand-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, rgba(0, 229, 255, 0.2), rgba(0, 230, 118, 0.1));
+    /* Animated Brand Icon (Floating Leaf with Wind Sway) */
+    .brand-icon-wrapper {
+      position: relative;
+      width: 50px;
+      height: 50px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, rgba(0, 229, 255, 0.18), rgba(0, 230, 118, 0.12));
       border: 1px solid var(--glass-border-hover);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
-      box-shadow: 0 0 20px rgba(0, 229, 255, 0.15);
+      box-shadow: 0 0 24px var(--env-glow);
+      animation: floatBreath 4s ease-in-out infinite;
+    }
+
+    .brand-svg {
+      width: 28px;
+      height: 28px;
+      fill: none;
+      stroke: var(--teal);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 6px var(--teal));
+      animation: leafSway 6s ease-in-out infinite;
+    }
+
+    @keyframes floatBreath {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-4px) scale(1.02); }
+    }
+
+    @keyframes leafSway {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(8deg); }
+      75% { transform: rotate(-8deg); }
     }
 
     .brand-title h1 {
@@ -120,18 +165,41 @@
       font-size: 26px;
       font-weight: 700;
       letter-spacing: -0.5px;
-      background: linear-gradient(120deg, #FFFFFF 40%, var(--teal) 100%);
+      background: linear-gradient(120deg, #FFFFFF 40%, var(--env-accent) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .brand-title p {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      color: var(--teal);
+      color: var(--env-accent);
       letter-spacing: 1.5px;
       text-transform: uppercase;
       font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Live Atmospheric State Capsule */
+    .env-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      background: rgba(0, 229, 255, 0.1);
+      border: 1px solid var(--env-glow);
+      color: var(--env-accent);
+      margin-left: 6px;
     }
 
     .header-actions {
@@ -140,31 +208,33 @@
       gap: 12px;
     }
 
-    /* Status Pill */
+    /* Status Pill with Pulsing Ring */
     .status-pill {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 6px 14px;
+      padding: 7px 16px;
       border-radius: 999px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 1px;
-      background: rgba(16, 26, 48, 0.8);
+      background: rgba(16, 26, 48, 0.85);
       border: 1px solid var(--glass-border);
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(12px);
+      transition: all 0.3s ease;
     }
 
     .status-pill.online {
       color: var(--green);
-      border-color: rgba(0, 230, 118, 0.3);
-      box-shadow: 0 0 15px rgba(0, 230, 118, 0.15);
+      border-color: rgba(0, 230, 118, 0.35);
+      box-shadow: 0 0 18px rgba(0, 230, 118, 0.2);
     }
 
     .status-pill.offline {
       color: var(--red);
-      border-color: rgba(255, 82, 82, 0.3);
+      border-color: rgba(255, 82, 82, 0.35);
+      box-shadow: 0 0 15px rgba(255, 82, 82, 0.2);
     }
 
     .dot {
@@ -178,16 +248,18 @@
     .status-pill.online .dot::after {
       content: '';
       position: absolute;
-      width: 100%;
-      height: 100%;
+      top: -4px;
+      left: -4px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
-      background-color: currentColor;
-      animation: pulse 2s infinite ease-out;
+      border: 2px solid currentColor;
+      animation: rippleWave 2s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
     }
 
-    @keyframes pulse {
-      0% { transform: scale(1); opacity: 0.8; }
-      100% { transform: scale(2.6); opacity: 0; }
+    @keyframes rippleWave {
+      0% { transform: scale(0.4); opacity: 1; }
+      100% { transform: scale(2.2); opacity: 0; }
     }
 
     /* Glass Buttons */
@@ -210,21 +282,26 @@
     }
 
     .btn:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.12);
       border-color: var(--glass-border-hover);
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn:active {
+      transform: translateY(0);
     }
 
     .btn.active {
-      background: rgba(0, 229, 255, 0.15);
+      background: rgba(0, 229, 255, 0.16);
       border-color: var(--teal);
       color: var(--teal);
-      box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.25);
     }
 
     .btn-icon {
-      font-size: 14px;
-      transition: transform 0.4s ease;
+      display: inline-block;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .btn:hover .btn-icon.spin {
@@ -245,15 +322,16 @@
       }
     }
 
-    /* Glass Card Style */
+    /* Glass Card Style with Glow Border Animation */
     .glass-card {
       background: var(--navy-card);
       border: 1px solid var(--glass-border);
-      border-radius: 20px;
+      border-radius: 22px;
       padding: 24px;
-      backdrop-filter: blur(16px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-      transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
       position: relative;
       overflow: hidden;
     }
@@ -265,12 +343,13 @@
       left: 0;
       right: 0;
       height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
     }
 
     .glass-card:hover {
       border-color: var(--glass-border-hover);
-      box-shadow: 0 10px 36px rgba(0, 0, 0, 0.45), 0 0 20px rgba(0, 229, 255, 0.05);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 25px var(--env-glow);
+      transform: translateY(-2px);
     }
 
     /* Air Quality Hero Card */
@@ -288,12 +367,29 @@
       }
     }
 
-    /* Circular Gauge */
+    /* Circular Gauge with Orbiting Scanner Ring */
     .gauge-wrapper {
       position: relative;
-      width: 170px;
-      height: 170px;
+      width: 175px;
+      height: 175px;
       flex-shrink: 0;
+    }
+
+    .gauge-orbit {
+      position: absolute;
+      top: -6px;
+      left: -6px;
+      width: 187px;
+      height: 187px;
+      border-radius: 50%;
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      pointer-events: none;
+      animation: rotateOrbit 25s linear infinite;
+    }
+
+    @keyframes rotateOrbit {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     .gauge-svg {
@@ -304,7 +400,7 @@
 
     .gauge-bg {
       fill: none;
-      stroke: rgba(255, 255, 255, 0.06);
+      stroke: rgba(255, 255, 255, 0.05);
       stroke-width: 12;
     }
 
@@ -315,8 +411,8 @@
       stroke-linecap: round;
       stroke-dasharray: 440;
       stroke-dashoffset: 440;
-      transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s ease;
-      filter: drop-shadow(0 0 8px var(--teal-glow));
+      transition: stroke-dashoffset 1.4s cubic-bezier(0.3, 0, 0.2, 1), stroke 0.6s ease;
+      filter: drop-shadow(0 0 10px var(--teal-glow));
     }
 
     .gauge-center {
@@ -329,17 +425,19 @@
 
     .gauge-score {
       font-family: 'Outfit', sans-serif;
-      font-size: 42px;
+      font-size: 44px;
       font-weight: 800;
       line-height: 1;
       letter-spacing: -1px;
+      transition: color 0.5s ease;
     }
 
     .gauge-max {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
+      font-size: 10px;
       color: var(--text-muted);
       margin-top: 4px;
+      letter-spacing: 1px;
     }
 
     .aq-details {
@@ -353,15 +451,13 @@
       align-items: center;
       gap: 6px;
       align-self: flex-start;
-      padding: 4px 12px;
+      padding: 5px 14px;
       border-radius: 999px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 1px;
-      background: rgba(0, 230, 118, 0.1);
-      color: var(--green);
-      border: 1px solid rgba(0, 230, 118, 0.3);
+      transition: all 0.5s ease;
     }
 
     .aq-title {
@@ -384,17 +480,18 @@
       margin-top: auto;
     }
 
-    /* Environmental Telemetry Grid */
+    /* Section Titles */
     .section-title {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 1.5px;
-      color: var(--teal);
+      color: var(--env-accent);
       margin-bottom: 16px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      transition: color 0.6s ease;
     }
 
     .section-title::after {
@@ -404,10 +501,11 @@
       background: var(--glass-border);
     }
 
+    /* Environmental Telemetry Grid */
     .metrics-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
+      gap: 18px;
       margin-bottom: 24px;
     }
 
@@ -427,7 +525,8 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
-      padding: 20px;
+      padding: 22px;
+      position: relative;
     }
 
     .metric-header {
@@ -436,38 +535,127 @@
       align-items: center;
     }
 
+    .metric-label-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Animated Vector Icons */
+    .anim-icon-box {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .metric-card:hover .anim-icon-box {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--env-glow);
+      transform: scale(1.08);
+    }
+
+    /* Thermometer Animation */
+    .anim-thermo {
+      width: 16px;
+      height: 16px;
+      stroke: var(--amber);
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      animation: pulseHeat 2.5s ease-in-out infinite;
+    }
+
+    @keyframes pulseHeat {
+      0%, 100% { filter: drop-shadow(0 0 2px var(--amber)); transform: scale(1); }
+      50% { filter: drop-shadow(0 0 7px var(--amber)); transform: scale(1.06); }
+    }
+
+    /* Water Droplet Animation */
+    .anim-drop {
+      width: 16px;
+      height: 16px;
+      stroke: var(--teal);
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      animation: floatDrop 3s ease-in-out infinite;
+    }
+
+    @keyframes floatDrop {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    /* Cloud Animation */
+    .anim-cloud {
+      width: 17px;
+      height: 17px;
+      stroke: var(--blue);
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      animation: driftCloud 4s ease-in-out infinite;
+    }
+
+    @keyframes driftCloud {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(3px); }
+    }
+
+    /* Wind / Gas Animation */
+    .anim-wind {
+      width: 16px;
+      height: 16px;
+      stroke: var(--purple);
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      animation: swirlWind 3s ease-in-out infinite;
+    }
+
+    @keyframes swirlWind {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      50% { transform: scale(1.08) rotate(6deg); }
+    }
+
     .metric-label {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       font-weight: 600;
       color: var(--text-muted);
       letter-spacing: 1px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
     }
 
     .metric-tag {
       font-family: 'JetBrains Mono', monospace;
       font-size: 10px;
       font-weight: 700;
-      padding: 2px 8px;
+      padding: 3px 9px;
       border-radius: 6px;
       letter-spacing: 0.5px;
+      transition: all 0.4s ease;
     }
 
     .metric-value-wrap {
       display: flex;
       align-items: baseline;
       gap: 6px;
+      margin: 4px 0;
     }
 
     .metric-value {
       font-family: 'Outfit', sans-serif;
-      font-size: 34px;
+      font-size: 36px;
       font-weight: 700;
       letter-spacing: -0.5px;
       line-height: 1;
+      transition: transform 0.2s ease;
     }
 
     .metric-unit {
@@ -487,12 +675,12 @@
       color: var(--text-subtle);
     }
 
-    /* Tag themes */
-    .tag-green { background: rgba(0, 230, 118, 0.12); color: var(--green); border: 1px solid rgba(0, 230, 118, 0.25); }
-    .tag-amber { background: rgba(255, 179, 0, 0.12); color: var(--amber); border: 1px solid rgba(255, 179, 0, 0.25); }
-    .tag-red   { background: rgba(255, 82, 82, 0.12); color: var(--red);   border: 1px solid rgba(255, 82, 82, 0.25); }
-    .tag-blue  { background: rgba(41, 121, 255, 0.12); color: var(--blue);  border: 1px solid rgba(41, 121, 255, 0.25); }
-    .tag-teal  { background: rgba(0, 229, 255, 0.12); color: var(--teal);  border: 1px solid rgba(0, 229, 255, 0.25); }
+    /* Tag Themes */
+    .tag-green { background: rgba(0, 230, 118, 0.12); color: var(--green); border: 1px solid rgba(0, 230, 118, 0.3); box-shadow: 0 0 10px rgba(0, 230, 118, 0.1); }
+    .tag-amber { background: rgba(255, 179, 0, 0.12); color: var(--amber); border: 1px solid rgba(255, 179, 0, 0.3); box-shadow: 0 0 10px rgba(255, 179, 0, 0.1); }
+    .tag-red   { background: rgba(255, 82, 82, 0.12); color: var(--red);   border: 1px solid rgba(255, 82, 82, 0.3);   box-shadow: 0 0 10px rgba(255, 82, 82, 0.1); }
+    .tag-blue  { background: rgba(41, 121, 255, 0.12); color: var(--blue);  border: 1px solid rgba(41, 121, 255, 0.3);  box-shadow: 0 0 10px rgba(41, 121, 255, 0.1); }
+    .tag-teal  { background: rgba(0, 229, 255, 0.12); color: var(--teal);  border: 1px solid rgba(0, 229, 255, 0.3);  box-shadow: 0 0 10px rgba(0, 229, 255, 0.1); }
 
     /* Chart Section */
     .chart-section {
@@ -543,6 +731,12 @@
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid var(--glass-border);
       border-radius: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .diag-item:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: var(--glass-border-hover);
     }
 
     .diag-label {
@@ -561,7 +755,7 @@
       color: var(--text-main);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
 
     .diag-sub {
@@ -586,7 +780,7 @@
     }
 
     footer a {
-      color: var(--teal);
+      color: var(--env-accent);
       text-decoration: none;
       transition: color 0.2s;
     }
@@ -594,22 +788,12 @@
     footer a:hover {
       text-decoration: underline;
     }
-
-    /* Loading Shimmer Animation */
-    .shimmer {
-      background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
-      background-size: 200% 100%;
-      animation: shimmerAnim 2s infinite;
-      border-radius: 4px;
-    }
-
-    @keyframes shimmerAnim {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
-    }
   </style>
 </head>
 <body>
+
+  <!-- Dynamic Atmospheric Particle Canvas -->
+  <canvas id="ambientCanvas"></canvas>
 
   <!-- Ambient Top Edge Accent -->
   <div class="top-glow"></div>
@@ -619,10 +803,22 @@
     <!-- Top Navigation & Brand Header -->
     <header>
       <div class="brand-group">
-        <div class="brand-icon">🍃</div>
+        <div class="brand-icon-wrapper">
+          <svg class="brand-svg" viewBox="0 0 24 24">
+            <path d="M11 20A7 7 0 0 1 4 13C4 7 11 3 20 4c1 9-3 16-9 16z"></path>
+            <path d="M9 15l6-6"></path>
+          </svg>
+        </div>
         <div class="brand-title">
-          <h1>AirSense Pro</h1>
-          <p>Live Environmental Telemetry</p>
+          <h1>
+            AirSense Pro
+            <span id="envConditionBadge" class="env-badge">🍃 FRESH</span>
+          </h1>
+          <p>
+            <span>Live Environmental Telemetry</span>
+            <span>•</span>
+            <span id="liveTimestampTicker">Connecting...</span>
+          </p>
         </div>
       </div>
 
@@ -634,12 +830,12 @@
         </div>
 
         <!-- Temperature Unit Toggle -->
-        <button id="unitToggleBtn" class="btn" onclick="toggleTempUnit()">
+        <button id="unitToggleBtn" class="btn" onclick="toggleTempUnit()" title="Toggle °C / °F">
           <span>°C</span>
         </button>
 
         <!-- Refresh Button -->
-        <button id="refreshBtn" class="btn" onclick="fetchLiveTelemetry(true)">
+        <button id="refreshBtn" class="btn" onclick="fetchLiveTelemetry(true)" title="Manually Sync Data">
           <span class="btn-icon spin">↺</span>
           <span>SYNC</span>
         </button>
@@ -648,10 +844,11 @@
 
     <!-- Hero Section: Air Quality & Live Health Overview -->
     <div class="hero-grid">
-      <!-- Air Quality Gauge Card -->
+      <!-- Air Quality Gauge Card with Orbiting Ring -->
       <div class="glass-card">
         <div class="aq-hero-content">
           <div class="gauge-wrapper">
+            <div class="gauge-orbit"></div>
             <svg class="gauge-svg" viewBox="0 0 160 160">
               <circle class="gauge-bg" cx="80" cy="80" r="70" />
               <circle id="gaugeBar" class="gauge-bar" cx="80" cy="80" r="70" />
@@ -663,7 +860,7 @@
           </div>
 
           <div class="aq-details">
-            <div id="aqBadge" class="aq-badge">CALIBRATING</div>
+            <div id="aqBadge" class="aq-badge tag-teal">CALIBRATING</div>
             <div id="aqTitle" class="aq-title">Air Quality Index</div>
             <div id="aqDesc" class="aq-desc">Receiving live telemetry stream from sensor node...</div>
             <div id="lastSyncTime" class="aq-time">Last update: --</div>
@@ -674,9 +871,9 @@
       <!-- Health Recommendation & Status Overview -->
       <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
         <div>
-          <div class="section-title">SENSOR HEALTH & CALIBRATION</div>
+          <div class="section-title">ATMOSPHERIC STATE & HEALTH INSIGHTS</div>
           <h3 id="healthHeadline" style="font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 8px;">
-            Analyzing Atmosphere
+            Analyzing Atmosphere...
           </h3>
           <p id="healthAdvice" style="color: var(--text-muted); font-size: 14px; line-height: 1.6;">
             The Bosch BME680 sensor is monitoring ambient temperature, relative humidity, barometric pressure, and VOC gas resistance.
@@ -686,24 +883,37 @@
         <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap;">
           <div class="diag-item" style="flex: 1; min-width: 140px;">
             <div class="diag-label">SENSOR STATUS</div>
-            <div id="sensorHwStatus" class="diag-value" style="color: var(--green);">ONLINE (OK)</div>
+            <div id="sensorHwStatus" class="diag-value" style="color: var(--green);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              ONLINE (OK)
+            </div>
           </div>
           <div class="diag-item" style="flex: 1; min-width: 140px;">
-            <div class="diag-label">CALIBRATION LEVEL</div>
-            <div id="calibLevel" class="diag-value" style="color: var(--teal);">OPTIMAL</div>
+            <div class="diag-label">AIR COMPOSITION</div>
+            <div id="calibLevel" class="diag-value" style="color: var(--teal);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+              BALANCED
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Live Metrics Grid -->
-    <div class="section-title">ENVIRONMENT // TELEMETRY METRICS</div>
+    <!-- Live Metrics Grid with Animated Icons -->
+    <div class="section-title">ENVIRONMENT // LIVE TELEMETRY</div>
     <div class="metrics-grid">
       
       <!-- Temperature Card -->
       <div class="glass-card metric-card">
         <div class="metric-header">
-          <div class="metric-label"><span>🌡️</span> TEMPERATURE</div>
+          <div class="metric-label-group">
+            <div class="anim-icon-box">
+              <svg class="anim-thermo" viewBox="0 0 24 24">
+                <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path>
+              </svg>
+            </div>
+            <div class="metric-label">TEMPERATURE</div>
+          </div>
           <div id="tempTag" class="metric-tag tag-green">NORMAL</div>
         </div>
         <div class="metric-value-wrap">
@@ -712,14 +922,21 @@
         </div>
         <div class="metric-footer">
           <span>Target: 20 - 26 °C</span>
-          <span id="tempMinMax">--</span>
+          <span id="tempMinMax">Normal Range</span>
         </div>
       </div>
 
       <!-- Humidity Card -->
       <div class="glass-card metric-card">
         <div class="metric-header">
-          <div class="metric-label"><span>💧</span> HUMIDITY</div>
+          <div class="metric-label-group">
+            <div class="anim-icon-box">
+              <svg class="anim-drop" viewBox="0 0 24 24">
+                <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+              </svg>
+            </div>
+            <div class="metric-label">HUMIDITY</div>
+          </div>
           <div id="humTag" class="metric-tag tag-green">COMFORT</div>
         </div>
         <div class="metric-value-wrap">
@@ -735,7 +952,14 @@
       <!-- Barometric Pressure Card -->
       <div class="glass-card metric-card">
         <div class="metric-header">
-          <div class="metric-label"><span>☁️</span> PRESSURE</div>
+          <div class="metric-label-group">
+            <div class="anim-icon-box">
+              <svg class="anim-cloud" viewBox="0 0 24 24">
+                <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+              </svg>
+            </div>
+            <div class="metric-label">PRESSURE</div>
+          </div>
           <div id="presTag" class="metric-tag tag-blue">STABLE</div>
         </div>
         <div class="metric-value-wrap">
@@ -751,7 +975,14 @@
       <!-- Gas Resistance Card -->
       <div class="glass-card metric-card">
         <div class="metric-header">
-          <div class="metric-label"><span>💨</span> GAS RESISTANCE</div>
+          <div class="metric-label-group">
+            <div class="anim-icon-box">
+              <svg class="anim-wind" viewBox="0 0 24 24">
+                <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path>
+              </svg>
+            </div>
+            <div class="metric-label">GAS RESISTANCE</div>
+          </div>
           <div id="gasTag" class="metric-tag tag-teal">CLEAN</div>
         </div>
         <div class="metric-value-wrap">
@@ -759,8 +990,8 @@
           <div class="metric-unit">kΩ</div>
         </div>
         <div class="metric-footer">
-          <span>VOC & Smells Index</span>
-          <span id="gasRaw">--</span>
+          <span>VOC & Air Purity</span>
+          <span id="gasRaw">Low Odor</span>
         </div>
       </div>
 
@@ -806,25 +1037,37 @@
       <div class="diagnostics-grid">
         <div class="diag-item">
           <div class="diag-label">WI-FI NETWORK</div>
-          <div id="sysSsid" class="diag-value">--</div>
+          <div id="sysSsid" class="diag-value">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+            <span id="sysSsidText">--</span>
+          </div>
           <div id="sysRssi" class="diag-sub">Signal: -- dBm</div>
         </div>
 
         <div class="diag-item">
           <div class="diag-label">LOCAL IP ADDRESS</div>
-          <div id="sysIp" class="diag-value">--</div>
+          <div id="sysIp" class="diag-value">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+            <span id="sysIpText">--</span>
+          </div>
           <div class="diag-sub">mDNS: airsense.local</div>
         </div>
 
         <div class="diag-item">
           <div class="diag-label">SYSTEM UPTIME</div>
-          <div id="sysUptime" class="diag-value">--</div>
+          <div id="sysUptime" class="diag-value">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span id="sysUptimeText">--</span>
+          </div>
           <div id="sysReads" class="diag-sub">Reads: --</div>
         </div>
 
         <div class="diag-item">
           <div class="diag-label">FIRMWARE VERSION</div>
-          <div id="sysFirmware" class="diag-value">v1.9.0</div>
+          <div id="sysFirmware" class="diag-value">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            <span>v1.9.0</span>
+          </div>
           <div id="sysHeap" class="diag-sub">Free Heap: -- KB</div>
         </div>
       </div>
@@ -834,10 +1077,11 @@
     <footer>
       <div>
         <span>AirSense Pro IoT Monitoring</span> • 
-        <span>ESP32 + BME680 Architecture</span>
+        <span>ESP32 + Bosch BME680</span> •
+        <span>7-Day Cloud Retention Active</span>
       </div>
       <div>
-        <a href="https://github.com" target="_blank" rel="noopener">GitHub Project Repository</a>
+        <a href="https://github.com/ajaythakur933/airsense-dashboard" target="_blank" rel="noopener">GitHub Project Repository</a>
       </div>
     </footer>
 
@@ -854,7 +1098,14 @@
     let currentMetricMode = 'temp'; // 'temp', 'aqi', 'gas', 'press'
     let telemetryChart = null;
     let latestTempCelsius = null;
+    let latestHum = null;
+    let latestScore = null;
+    let latestGas = null;
+    let latestPres = null;
     let pollInterval = null;
+
+    // Environmental state mode for particle engine: 'clean', 'warm', 'humid', 'hazy'
+    let envMode = 'clean';
 
     // Window sample limits matching mobile app
     const WINDOW_CONFIG = {
@@ -865,6 +1116,100 @@
     };
 
     // ============================================================
+    // DYNAMIC ATMOSPHERIC PARTICLE ENGINE
+    // ============================================================
+    const canvas = document.getElementById('ambientCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let width, height;
+
+    function resizeCanvas() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class AtmosphereParticle {
+      constructor() {
+        this.reset(true);
+      }
+
+      reset(init = false) {
+        this.x = Math.random() * width;
+        this.y = init ? Math.random() * height : (envMode === 'humid' ? -10 : height + 10);
+        this.size = Math.random() * 2.5 + 1.0;
+        this.baseAlpha = Math.random() * 0.4 + 0.2;
+        this.alpha = this.baseAlpha;
+        this.speedY = (Math.random() * 0.6 + 0.25) * (envMode === 'humid' ? 1.4 : -1);
+        this.speedX = (Math.random() - 0.5) * 0.4;
+        this.oscillation = Math.random() * Math.PI * 2;
+        this.oscSpeed = Math.random() * 0.02 + 0.01;
+      }
+
+      update() {
+        this.oscillation += this.oscSpeed;
+        this.x += this.speedX + Math.sin(this.oscillation) * 0.4;
+        this.y += this.speedY;
+
+        // Wrap around
+        if (envMode === 'humid') {
+          if (this.y > height + 10) this.reset();
+        } else {
+          if (this.y < -10) this.reset();
+        }
+        if (this.x < -10) this.x = width + 10;
+        if (this.x > width + 10) this.x = -10;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+
+        // Color depends on live environmental state
+        if (envMode === 'clean') {
+          // Luminous cyan / mint breeze
+          ctx.fillStyle = `rgba(0, 229, 255, ${this.alpha})`;
+          ctx.shadowColor = 'rgba(0, 229, 255, 0.6)';
+        } else if (envMode === 'warm') {
+          // Warm shimmering golden amber
+          ctx.fillStyle = `rgba(255, 179, 0, ${this.alpha})`;
+          ctx.shadowColor = 'rgba(255, 179, 0, 0.6)';
+        } else if (envMode === 'humid') {
+          // Cool mist droplets
+          ctx.fillStyle = `rgba(41, 121, 255, ${this.alpha})`;
+          ctx.shadowColor = 'rgba(41, 121, 255, 0.6)';
+        } else {
+          // Hazy / VOC warning reddish-amber
+          ctx.fillStyle = `rgba(255, 82, 82, ${this.alpha})`;
+          ctx.shadowColor = 'rgba(255, 82, 82, 0.6)';
+        }
+
+        ctx.shadowBlur = this.size * 3;
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // Initialize 45 ambient particles
+    for (let i = 0; i < 45; i++) {
+      particles.push(new AtmosphereParticle());
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, width, height);
+      for (let p of particles) {
+        p.update();
+        p.draw();
+      }
+      requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    // ============================================================
     // INITIALIZATION
     // ============================================================
     window.addEventListener('DOMContentLoaded', () => {
@@ -873,7 +1218,7 @@
       fetchSystemStatus();
       loadHistoryData(currentWindow);
 
-      // Realtime polling: live every 4 seconds, system every 15 seconds, history every 60 seconds
+      // Realtime polling
       pollInterval = setInterval(fetchLiveTelemetry, 4000);
       setInterval(fetchSystemStatus, 15000);
       setInterval(() => loadHistoryData(currentWindow), 60000);
@@ -926,7 +1271,7 @@
     }
 
     // ============================================================
-    // UPDATE DASHBOARD UI
+    // UPDATE DASHBOARD UI & ENVIRONMENTAL STATE
     // ============================================================
     function updateDashboard(entry) {
       // Temperature
@@ -934,22 +1279,22 @@
       renderTemperature();
 
       // Humidity
-      const hum = parseFloat(entry.humidity ?? entry.hum ?? 0);
-      document.getElementById('humVal').textContent = hum.toFixed(1);
-      updateHumidityTag(hum);
+      latestHum = parseFloat(entry.humidity ?? entry.hum ?? 0);
+      document.getElementById('humVal').textContent = latestHum.toFixed(1);
+      updateHumidityTag(latestHum);
 
-      // Calculate approximate dew point
-      const dew = latestTempCelsius - ((100 - hum) / 5);
+      // Dew point
+      const dew = latestTempCelsius - ((100 - latestHum) / 5);
       document.getElementById('humDew').textContent = `Dew: ${isFahrenheit ? (dew * 9/5 + 32).toFixed(1) + '°F' : dew.toFixed(1) + '°C'}`;
 
       // Pressure
-      const pres = parseFloat(entry.pressure ?? entry.press ?? 0);
-      document.getElementById('presVal').textContent = pres.toFixed(1);
+      latestPres = parseFloat(entry.pressure ?? entry.press ?? 0);
+      document.getElementById('presVal').textContent = latestPres.toFixed(1);
       const presTag = document.getElementById('presTag');
-      if (pres < 1000) {
+      if (latestPres < 1000) {
         presTag.textContent = "LOW (RAIN)";
         presTag.className = "metric-tag tag-amber";
-      } else if (pres > 1020) {
+      } else if (latestPres > 1020) {
         presTag.textContent = "HIGH (CLEAR)";
         presTag.className = "metric-tag tag-teal";
       } else {
@@ -959,30 +1304,76 @@
 
       // Gas Resistance
       let rawGas = parseFloat(entry.gas_resistance ?? entry.gas ?? 0);
-      let gasKohm = rawGas > 1000 ? rawGas / 1000 : rawGas;
-      document.getElementById('gasVal').textContent = gasKohm.toFixed(2);
+      latestGas = rawGas > 1000 ? rawGas / 1000 : rawGas;
+      document.getElementById('gasVal').textContent = latestGas.toFixed(2);
       const gasTag = document.getElementById('gasTag');
-      if (gasKohm > 50) {
+      if (latestGas > 50) {
         gasTag.textContent = "EXCELLENT";
         gasTag.className = "metric-tag tag-green";
-      } else if (gasKohm > 25) {
+      } else if (latestGas > 25) {
         gasTag.textContent = "GOOD";
         gasTag.className = "metric-tag tag-teal";
-      } else if (gasKohm > 10) {
+      } else if (latestGas > 10) {
         gasTag.textContent = "MODERATE";
         gasTag.className = "metric-tag tag-amber";
       } else {
-        gasTag.textContent = "VOC DETECTED";
+        gasTag.textContent = "VOC ALERT";
         gasTag.className = "metric-tag tag-red";
       }
 
       // Air Quality Score
-      const aqScore = parseFloat(entry.aq_score ?? entry.airQualityScore ?? 0);
-      updateAQScore(aqScore, entry.aq_level ?? entry.airStatus);
+      latestScore = parseFloat(entry.aq_score ?? entry.airQualityScore ?? 0);
+      updateAQScore(latestScore, entry.aq_level ?? entry.airStatus);
+
+      // Determine Ambient Environmental Mode & Dynamic Styling
+      determineAtmosphericMode();
 
       // Last sync timestamp
       const ts = entry.timestamp ? new Date(entry.timestamp) : new Date();
       document.getElementById('lastSyncTime').textContent = `Last update: ${ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+      document.getElementById('liveTimestampTicker').textContent = `Live Stream • ${ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+
+    // ============================================================
+    // DYNAMIC ATMOSPHERIC STATE & COLOR ADAPTATION
+    // ============================================================
+    function determineAtmosphericMode() {
+      const badge = document.getElementById('envConditionBadge');
+      const root = document.documentElement;
+
+      if (latestScore < 50 || (latestGas && latestGas < 12)) {
+        envMode = 'hazy';
+        badge.textContent = "⚠️ STAGNANT AIR";
+        badge.style.color = "var(--red)";
+        badge.style.borderColor = "rgba(255, 82, 82, 0.4)";
+        badge.style.background = "rgba(255, 82, 82, 0.12)";
+        root.style.setProperty('--env-accent', '#FF5252');
+        root.style.setProperty('--env-glow', 'rgba(255, 82, 82, 0.28)');
+      } else if (latestHum && latestHum > 68) {
+        envMode = 'humid';
+        badge.textContent = "💧 HUMID MIST";
+        badge.style.color = "var(--blue)";
+        badge.style.borderColor = "rgba(41, 121, 255, 0.4)";
+        badge.style.background = "rgba(41, 121, 255, 0.12)";
+        root.style.setProperty('--env-accent', '#2979FF');
+        root.style.setProperty('--env-glow', 'rgba(41, 121, 255, 0.28)');
+      } else if (latestTempCelsius && latestTempCelsius > 31) {
+        envMode = 'warm';
+        badge.textContent = "☀️ WARM SHINE";
+        badge.style.color = "var(--amber)";
+        badge.style.borderColor = "rgba(255, 179, 0, 0.4)";
+        badge.style.background = "rgba(255, 179, 0, 0.12)";
+        root.style.setProperty('--env-accent', '#FFB300');
+        root.style.setProperty('--env-glow', 'rgba(255, 179, 0, 0.28)');
+      } else {
+        envMode = 'clean';
+        badge.textContent = "🍃 FRESH BREEZE";
+        badge.style.color = "var(--teal)";
+        badge.style.borderColor = "rgba(0, 229, 255, 0.4)";
+        badge.style.background = "rgba(0, 229, 255, 0.12)";
+        root.style.setProperty('--env-accent', '#00E5FF');
+        root.style.setProperty('--env-glow', 'rgba(0, 229, 255, 0.28)');
+      }
     }
 
     // ============================================================
@@ -1095,25 +1486,24 @@
       }
 
       bar.style.stroke = color;
-      bar.style.filter = `drop-shadow(0 0 10px ${glow})`;
+      bar.style.filter = `drop-shadow(0 0 12px ${glow})`;
     }
 
     // ============================================================
     // SYSTEM STATUS UI
     // ============================================================
     function updateSystemUI(sys) {
-      if (sys.ssid) document.getElementById('sysSsid').textContent = sys.ssid;
+      if (sys.ssid) document.getElementById('sysSsidText').textContent = sys.ssid;
       if (sys.rssi) {
         const rssi = parseInt(sys.rssi);
         const quality = rssi > -55 ? 'Excellent' : rssi > -70 ? 'Good' : 'Weak';
-        document.getElementById('sysRssi').textContent = `${rssi} dBm (${quality})`;
+        document.getElementById('sysRssi').textContent = `Signal: ${rssi} dBm (${quality})`;
       }
-      if (sys.ip) document.getElementById('sysIp').textContent = sys.ip;
-      if (sys.firmware) document.getElementById('sysFirmware').textContent = `v${sys.firmware}`;
+      if (sys.ip) document.getElementById('sysIpText').textContent = sys.ip;
       if (sys.sensorReads) document.getElementById('sysReads').textContent = `Reads: ${Number(sys.sensorReads).toLocaleString()}`;
       if (sys.freeHeap) document.getElementById('sysHeap').textContent = `Free Heap: ${(sys.freeHeap / 1024).toFixed(1)} KB`;
       if (sys.uptime !== undefined) {
-        document.getElementById('sysUptime').textContent = formatUptime(parseInt(sys.uptime));
+        document.getElementById('sysUptimeText').textContent = formatUptime(parseInt(sys.uptime));
       }
     }
 
